@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Groq Voice Assistant</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2 class="sidebar-title">Chats</h2>
+                <button class="button new-chat" onclick="newConversation()">+ New</button>
+            </div>
+            <div class="sidebar-search">
+                <input class="input" id="historySearch" placeholder="Search chats" oninput="filterHistory()">
+            </div>
+            <ul class="history" id="historyList"></ul>
+        </aside>
+
+        <main class="chat">
+            <div class="header">
+                <div>
+                    <h1 class="title">Groq Voice Assistant</h1>
+                    <p class="subtitle">Ask anything by typing or speaking. Responses are also spoken aloud.</p>
+                </div>
+                <span class="badge" id="statusBadge">Ready</span>
+            </div>
+
+            <section id="messages" class="messages"></section>
+
+            <div class="form composer">
+                <input class="input" type="text" id="userInput" placeholder="Type your message and press Enter...">
+                <button class="button primary" id="sendBtn" onclick="sendMessage()">Send</button>
+                <button class="button icon" id="speakBtn" onclick="voiceInput()" title="Speak">🎤</button>
+                <button class="button" id="stopBtn" onclick="stopVoice()" title="Stop speaking">Stop</button>
+            </div>
+
+            <div class="helper">Tip: Press Enter to send. Use the mic to dictate.</div>
+            <footer>Powered by Groq</footer>
+        </main>
+    </div>
+
+    <script src="/static/script.js"></script>
+    <script>
+    function setLoadingState(isLoading) {
+        const sendBtn = document.getElementById('sendBtn');
+        const speakBtn = document.getElementById('speakBtn');
+        const status = document.getElementById('statusBadge');
+        if (isLoading) {
+            sendBtn.classList.add('disabled');
+            speakBtn.classList.add('disabled');
+            sendBtn.textContent = 'Sending…';
+            status.textContent = 'Thinking…';
+        } else {
+            sendBtn.classList.remove('disabled');
+            speakBtn.classList.remove('disabled');
+            sendBtn.textContent = 'Send';
+            status.textContent = 'Ready';
+        }
+    }
+
+    function voiceInput() {
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.lang = "en-US";
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+
+        recognition.start();
+        document.getElementById('statusBadge').textContent = 'Listening…';
+
+        recognition.onresult = function(event) {
+            const transcript = event.results[0][0].transcript;
+            document.getElementById("userInput").value = transcript;
+            sendMessage();
+        };
+
+        recognition.onerror = function(event) {
+            alert("Voice input error: " + event.error);
+            document.getElementById('statusBadge').textContent = 'Ready';
+        };
+        recognition.onend = function() {
+            if (document.getElementById('statusBadge').textContent === 'Listening…') {
+                document.getElementById('statusBadge').textContent = 'Ready';
+            }
+        }
+    }
+
+    // Submit on Enter
+    document.addEventListener('DOMContentLoaded', function () {
+        const input = document.getElementById('userInput');
+        input.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+    });
+    </script>
+</body>
+</html>
